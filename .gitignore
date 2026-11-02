@@ -1,0 +1,13 @@
+/bin/
+/slack-cli
+/slack-cli.exe
+.env
+.env.*
+slack.json
+slack-native.json
+slack-cli.json
+slack-native-browser-profile/
+slack-native-playwright-browser-profile/
+slack-cli-browser-profile/
+config.json
+/browser-profile/
