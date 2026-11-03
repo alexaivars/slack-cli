@@ -360,7 +360,7 @@ func handleWrite(ctx context.Context, configPath string, opts commandOptions) er
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Posted message to %s at %s\n", conversationLabel(channel), posted.TS)
+	fmt.Printf("Posted message to %s at %s\n", conversationLabel(channel), terminalText(posted.TS))
 	return nil
 }
 
@@ -377,7 +377,7 @@ func handleReply(ctx context.Context, configPath string, opts commandOptions) er
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Posted reply to %s at %s\n", conversationLabel(channel), posted.TS)
+	fmt.Printf("Posted reply to %s at %s\n", conversationLabel(channel), terminalText(posted.TS))
 	return nil
 }
 
@@ -480,7 +480,7 @@ func handleDeleteMessage(ctx context.Context, configPath string, opts commandOpt
 	if err := client.DeleteMessage(ctx, channel.ID, opts.threadTS); err != nil {
 		return err
 	}
-	fmt.Printf("Deleted message %s from %s\n", opts.threadTS, conversationLabel(channel))
+	fmt.Printf("Deleted message %s from %s\n", terminalText(opts.threadTS), conversationLabel(channel))
 	return nil
 }
 
@@ -522,7 +522,7 @@ func handleFiles(ctx context.Context, configPath string, opts commandOptions) er
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Downloaded %s to %s\n", file.Name, opts.output)
+	fmt.Printf("Downloaded %s to %s\n", terminalText(file.Name), terminalText(opts.output))
 	return nil
 }
 
@@ -590,7 +590,7 @@ func formatMessageLines(messages todayMessages) string {
 		}
 		fmt.Fprintf(&output, "%s%s %-12s %s\n", indent, shortMessageTime(message.TS), messageSender(message), text)
 	}
-	return output.String()
+	return terminalText(output.String())
 }
 
 func printSearchResults(results []searchResult) {
@@ -607,11 +607,12 @@ func formatSearchResults(results []searchResult) string {
 		text := strings.ReplaceAll(normalizeSlackText(result.Text, nil), "\n", " ")
 		fmt.Fprintf(&output, "%s %-12s %-18s %s\n", shortMessageTime(result.TS), firstNonEmpty(result.DisplayName, result.User, "-"), channel, text)
 	}
-	return output.String()
+	return terminalText(output.String())
 }
 
 func conversationLabel(channel conversation) string {
-	name := firstNonEmpty(channel.NameNormalized, channel.Name)
+	name := terminalText(firstNonEmpty(channel.NameNormalized, channel.Name))
+	channel.ID = terminalText(channel.ID)
 	if channel.IsIM && name != "" {
 		if channel.ID == "" {
 			return "@" + strings.TrimPrefix(name, "@")

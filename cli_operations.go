@@ -234,6 +234,7 @@ func (client *slackClient) ResolveUser(ctx context.Context, value string) (slack
 	}
 	params := map[string]any{"limit": 200}
 	normalized := normalizeUserLookup(value)
+	matches := map[string]slackUser{}
 	for {
 		payload, err := client.callAPI(ctx, "users.list", params)
 		if err != nil {
@@ -250,8 +251,11 @@ func (client *slackClient) ResolveUser(ctx context.Context, value string) (slack
 			if user.Deleted || user.ID == "" {
 				continue
 			}
-			if slackUserMatches(user, normalized) {
+			if normalizeUserLookup(user.Name) == normalized {
 				return user, nil
+			}
+			if slackUserMatches(user, normalized) {
+				matches[user.ID] = user
 			}
 		}
 		cursor := strings.TrimSpace(response.ResponseMetadata.NextCursor)
@@ -259,6 +263,12 @@ func (client *slackClient) ResolveUser(ctx context.Context, value string) (slack
 			break
 		}
 		params["cursor"] = cursor
+	}
+	if len(matches) > 1 {
+		return slackUser{}, fmt.Errorf("ambiguous user: @%s; use a username or user ID", value)
+	}
+	for _, user := range matches {
+		return user, nil
 	}
 	return slackUser{}, fmt.Errorf("user not found: @%s", value)
 }

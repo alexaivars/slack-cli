@@ -163,7 +163,7 @@ func (m interactiveModel) View() tea.View {
 		m.defaultChannel,
 	)
 	var lines []string
-	lines = append(lines, header)
+	lines = append(lines, terminalText(header))
 	lines = append(lines, strings.Repeat("-", min(width, 100)))
 	for _, block := range m.output {
 		for _, line := range strings.Split(block, "\n") {
@@ -528,7 +528,7 @@ func interactiveCommandFields(line string) ([]string, error) {
 }
 
 func appendOutput(output []string, value string) []string {
-	output = append(output, value)
+	output = append(output, terminalText(value))
 	if len(output) > 200 {
 		output = output[len(output)-200:]
 	}

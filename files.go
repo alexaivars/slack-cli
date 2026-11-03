@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,6 +62,9 @@ func (client *slackClient) DownloadFile(ctx context.Context, fileID, destination
 		return slackFile{}, err
 	}
 
+	if err := validateSlackDownloadURL(file.URLPrivateDownload); err != nil {
+		return slackFile{}, err
+	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, file.URLPrivateDownload, nil)
 	if err != nil {
 		return slackFile{}, fmt.Errorf("build file download request: %w", err)
@@ -72,7 +76,14 @@ func (client *slackClient) DownloadFile(ctx context.Context, fileID, destination
 		request.Header.Set("Cookie", formatCookieHeader(client.cookies))
 	}
 
-	response, err := client.httpClient.Do(request)
+	downloadClient := *client.httpClient
+	downloadClient.CheckRedirect = func(request *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("too many download redirects")
+		}
+		return validateSlackDownloadURL(request.URL.String())
+	}
+	response, err := downloadClient.Do(request)
 	if err != nil {
 		return slackFile{}, fmt.Errorf("download Slack file: %w", err)
 	}
@@ -95,8 +106,21 @@ func (client *slackClient) DownloadFile(ctx context.Context, fileID, destination
 	if err := temporary.Close(); err != nil {
 		return slackFile{}, fmt.Errorf("finish download: %w", err)
 	}
-	if err := os.Rename(temporaryPath, destination); err != nil {
+	// Linking publishes the completed download without replacing a concurrent file.
+	publish := os.Link
+	if overwrite {
+		publish = os.Rename
+	}
+	if err := publish(temporaryPath, destination); err != nil {
 		return slackFile{}, fmt.Errorf("save download to %q: %w", destination, err)
 	}
 	return file, nil
+}
+
+func validateSlackDownloadURL(value string) error {
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Scheme != "https" || !strings.EqualFold(parsed.Host, "files.slack.com") || parsed.User != nil {
+		return errors.New("download URL must use HTTPS on files.slack.com without user information")
+	}
+	return nil
 }

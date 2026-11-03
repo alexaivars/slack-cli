@@ -148,7 +148,7 @@ func (m todayModel) View() tea.View {
 	}
 
 	content.WriteString("\nup/down or j/k navigate - r refresh - q quit")
-	view := tea.NewView(content.String())
+	view := tea.NewView(terminalText(content.String()))
 	view.AltScreen = true
 	return view
 }

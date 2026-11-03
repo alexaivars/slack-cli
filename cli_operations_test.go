@@ -211,3 +211,37 @@ func TestPostMessageSendsBlocks(t *testing.T) {
 		t.Fatalf("PostMessage returned %#v", got)
 	}
 }
+
+func TestResolveUserPrefersUsernameAndRejectsAmbiguousNames(t *testing.T) {
+	for _, tc := range []struct {
+		name, secondPage, want string
+	}{
+		{"username on later page", `{"id":"U2","name":"example-user","profile":{"display_name":"Example User"}}`, "U2"},
+		{"ambiguous display name", `{"id":"U2","name":"other","profile":{"display_name":"example-user"}}`, ""},
+		{"unique display name", `{"id":"U2","name":"other","profile":{"display_name":"Other"}}`, "U1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newSlackClient("https://slack.test/api", "xoxb-test")
+			client.httpClient.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+				if request.URL.Path != "/api/users.list" {
+					t.Fatalf("unexpected request: %s", request.URL.Path)
+				}
+				if err := request.ParseForm(); err != nil {
+					t.Fatal(err)
+				}
+				if request.Form.Get("cursor") == "" {
+					return jsonResponse(`{"ok":true,"members":[{"id":"U1","name":"first","profile":{"display_name":"example-user"}}],"response_metadata":{"next_cursor":"next"}}`), nil
+				}
+				return jsonResponse(`{"ok":true,"members":[` + tc.secondPage + `]}`), nil
+			})
+			got, err := client.ResolveUser(t.Context(), "@example-user")
+			if tc.want == "" {
+				if err == nil || !strings.Contains(err.Error(), "ambiguous") {
+					t.Fatalf("ambiguous recipient returned %q, %v", got.ID, err)
+				}
+			} else if err != nil || got.ID != tc.want {
+				t.Fatalf("recipient = %q, %v; want %s", got.ID, err, tc.want)
+			}
+		})
+	}
+}

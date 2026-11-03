@@ -48,5 +48,5 @@ func (m confirmModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m confirmModel) View() tea.View {
-	return tea.NewView(m.prompt + " [y/N] ")
+	return tea.NewView(terminalText(m.prompt) + " [y/N] ")
 }

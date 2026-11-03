@@ -91,7 +91,7 @@ type commandOptions struct {
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", terminalText(err.Error()))
 		os.Exit(1)
 	}
 }
@@ -392,7 +392,7 @@ func handleAuth(ctx context.Context, configPath string, opts commandOptions) err
 		if opts.json {
 			return printIndentedJSON(info)
 		}
-		fmt.Printf("Saved Slack token is valid (%s, %s, %s, %s)\n", info.Team, info.TeamID, info.User, info.UserID)
+		fmt.Printf("Saved Slack token is valid (%s, %s, %s, %s)\n", terminalText(info.Team), terminalText(info.TeamID), terminalText(info.User), terminalText(info.UserID))
 		return nil
 	case "logout":
 		if err := deleteConfig(configPath); err != nil {
@@ -432,7 +432,7 @@ func handleConfig(configPath string, opts commandOptions) error {
 		if !ok {
 			return fmt.Errorf("unknown config key: %s", opts.configKey)
 		}
-		fmt.Println(value)
+		fmt.Println(terminalText(value))
 		return nil
 	case "set":
 		next, err := setConfigValue(config, key, opts.configValue)
@@ -442,7 +442,7 @@ func handleConfig(configPath string, opts commandOptions) error {
 		if err := saveConfig(configPath, next); err != nil {
 			return err
 		}
-		fmt.Printf("Set %s=%s\n", key, safeConfigValue(key, opts.configValue))
+		fmt.Printf("Set %s=%s\n", terminalText(key), terminalText(safeConfigValue(key, opts.configValue)))
 		return nil
 	case "unset":
 		next, err := unsetConfigValue(config, key)
@@ -452,7 +452,7 @@ func handleConfig(configPath string, opts commandOptions) error {
 		if err := saveConfig(configPath, next); err != nil {
 			return err
 		}
-		fmt.Printf("Unset %s\n", key)
+		fmt.Printf("Unset %s\n", terminalText(key))
 		return nil
 	default:
 		return errors.New("config requires one of: get, set, unset")
@@ -496,7 +496,7 @@ func handlePosts(ctx context.Context, configPath string, opts commandOptions) er
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Saved %d posts to %s\n", exported, output)
+	fmt.Printf("Saved %d posts to %s\n", exported, terminalText(output))
 	if total != exported {
 		fmt.Printf("Slack reported %d total matches.\n", total)
 	}
@@ -563,7 +563,7 @@ func loginWithBrowser(ctx context.Context, path string, opts commandOptions) err
 	if err := saveConfig(path, config); err != nil {
 		return err
 	}
-	fmt.Printf("Saved Slack session to %s\n", path)
+	fmt.Printf("Saved Slack session to %s\n", terminalText(path))
 	if config.ExpiresAt != 0 {
 		fmt.Printf("Earliest cookie expiry: %s\n", time.Unix(config.ExpiresAt, 0).UTC().Format(time.RFC3339))
 	}

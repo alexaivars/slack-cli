@@ -3,7 +3,7 @@
 A Go CLI for reading, searching and writing Slack messages, with an interactive
 terminal interface and JSON output for scripts.
 
-Requires Go 1.26 or newer.
+Requires Go 1.26.10 or newer.
 
 ```sh
 go build -o bin/slack-cli .

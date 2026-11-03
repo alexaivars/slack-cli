@@ -83,7 +83,7 @@ func captureSlackSession(opts browserLoginOptions) (capturedSlackSession, error)
 	defer ticker.Stop()
 	for {
 		if err := updateStateFromChromedp(deadlineCtx, state); err != nil && opts.verbose {
-			fmt.Fprintf(os.Stderr, "storage extraction not ready: %v\n", err)
+			fmt.Fprintf(os.Stderr, "storage extraction not ready: %s\n", terminalText(err.Error()))
 		}
 		if state.tokenValue() != "" && state.hasCookie("d") {
 			break
@@ -95,7 +95,7 @@ func captureSlackSession(opts browserLoginOptions) (capturedSlackSession, error)
 		}
 	}
 	if err := updateStateFromChromedp(browserCtx, state); err != nil && opts.verbose {
-		fmt.Fprintf(os.Stderr, "warning: final browser state capture failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "warning: final browser state capture failed: %s\n", terminalText(err.Error()))
 	}
 	if state.tokenValue() == "" {
 		return capturedSlackSession{}, errors.New("captured no xoxc token from localConfig_v2")
@@ -220,7 +220,7 @@ func updateStateFromChromedp(ctx context.Context, state *browserCaptureState) er
 		firstCapture := state.tokenValue() == ""
 		state.captureToken(result.Token, "localConfig_v2")
 		if firstCapture && result.TeamID != "" && state.verbose {
-			fmt.Fprintf(os.Stderr, "captured Slack token for team %s\n", result.TeamID)
+			fmt.Fprintf(os.Stderr, "captured Slack token for team %s\n", terminalText(result.TeamID))
 		}
 	}
 
