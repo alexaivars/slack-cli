@@ -27,3 +27,13 @@ bin/slack-cli auth status --json
 bin/slack-cli read --json
 bin/slack-cli interactive
 ```
+
+To schedule a plain text message with your browser login, pass a channel or DM
+target and a future RFC3339 timestamp with its time zone:
+
+```sh
+bin/slack-cli schedule --at '2027-01-15T09:00:00+01:00' '#test-cli' 'Good morning'
+```
+
+Manage scheduled messages in Slack under **Drafts & sent → Scheduled**. This
+command uses Slack's undocumented browser draft API.

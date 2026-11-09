@@ -70,6 +70,7 @@ type commandOptions struct {
 	headless     bool
 	keepProfile  bool
 	timeout      time.Duration
+	scheduleAt   time.Time
 	params       map[string]any
 	month        string
 	output       string
@@ -125,6 +126,8 @@ func run(arguments []string) error {
 		return handleThread(context.Background(), configPath, opts)
 	case "write":
 		return handleWrite(context.Background(), configPath, opts)
+	case "schedule":
+		return handleSchedule(context.Background(), configPath, opts)
 	case "reply":
 		return handleReply(context.Background(), configPath, opts)
 	case "search":
@@ -191,6 +194,8 @@ func parseOptions(arguments []string) (commandOptions, error) {
 		return parseThreadOptions(opts, tokens)
 	case "write":
 		return parseWriteOptions(opts, tokens)
+	case "schedule":
+		return parseScheduleOptions(opts, tokens)
 	case "reply":
 		return parseReplyOptions(opts, tokens)
 	case "search":
@@ -806,6 +811,7 @@ func printHelp(writer io.Writer) {
   slack-cli [--config-file FILE] thread PERMALINK [--json]
   slack-cli [--config-file FILE] thread #CHANNEL TS [--json]
   slack-cli [--config-file FILE] write [#CHANNEL|@USER] TEXT [--format mrkdwn|markdown] [--file FILE] [--stdin] [--blocks-file FILE]
+  slack-cli [--config-file FILE] schedule --at RFC3339 TARGET TEXT
   slack-cli [--config-file FILE] reply #CHANNEL THREAD_TS TEXT
   slack-cli [--config-file FILE] search QUERY [--channel #CHANNEL] [--limit N] [--json]
   slack-cli [--config-file FILE] join #CHANNEL
